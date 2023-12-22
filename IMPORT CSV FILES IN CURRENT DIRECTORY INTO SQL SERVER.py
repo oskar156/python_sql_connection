@@ -27,7 +27,7 @@ from collections import defaultdict
 import pandas as pd
 import os
 
-engine = create_engine("mssql+pyodbc://:@" + str(server) + "/" + str(database) + "?driver=SQL+Server", use_setinputsizes=False)
+engine = create_engine("mssql+pyodbc://:@" + str(server) + "/" + str(database) + "?driver=SQL+Server", use_setinputsizes=False, fast_executemany=True)
 
 ###################################################################
 #IMPORT
@@ -47,19 +47,15 @@ for file in os.listdir(path):
 
         full_path = str(path) + "\\" + str(filename)
         filename_no_ext = os.path.splitext(os.path.basename(filename))[0]
-        bracketed_table_name = "[" + filename_no_ext + "]"
-        bracketed_index_name = "[ix_dbo_" + filename_no_ext + "_index]"
 
         with engine.connect() as conn:
 
           type = defaultdict(lambda: str)
           df = pd.read_csv(full_path, dtype=type, keep_default_na=False)
-          df.to_sql(filename_no_ext , schema='dbo', con=engine, dtype={col_name: NVARCHAR(length=255) for col_name in df})
-          conn.execute(text("DROP INDEX " + str(bracketed_index_name) + " ON " + str(bracketed_table_name)))
-          conn.execute(text("alter table " + str(bracketed_table_name) +" drop column [index]"))
+          df.to_sql(filename_no_ext , schema='dbo', con=engine, dtype={col_name: NVARCHAR(length=255) for col_name in df}, index=False, if_exists='append')
           conn.commit()
 
-        print(str(path) + "\\" + str(filename) + " imported as " + str(bracketed_table_name))
+        print(str(path) + "\\" + str(filename) + " imported as [" + str(filename_no_ext) + "]")
 
         tables_imported_to_sql = tables_imported_to_sql + 1
 
