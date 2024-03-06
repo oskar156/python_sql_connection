@@ -4,8 +4,8 @@ print("")
 ###################################################################
 # USER INPUT SECTION, UPDATE AS NEEDED
 
-server = "SERVER_NAME" #example: SQL04
-database = "DB_NAME" #example: TEMP_OK
+server = "SQL04" #example: SQL04
+database = "TEMP_OK" #example: TEMP_OK
 
 #There are 2 ways to search for tables to export...
 # IF OPTION 1 IS FILLED OUT, OPTION 1 WILL BE USED
@@ -25,6 +25,11 @@ list_of_table_names = []
 table_name_re = ""
 #--------------------------------------------------------
 
+
+
+
+
+#USUALLY LEAVE THESE AS IS
 seperator_description = "fixed-width"
 extension = "txt"
 
@@ -52,7 +57,8 @@ inspector = inspect(engine)
 ###################################################################
 # FIND TABLES IN SQL SERVER
 ###################################################################
-if list_of_table_names == []:
+
+if list_of_table_names == [] and table_name_re != "":
 	
   print("Searching for table matches in "+ str(server) + ".." + str(database) + " using regex expression " + str(table_name_re) + "...")
   
@@ -143,17 +149,37 @@ for table_name in list_of_table_names:
         
         #for each row in the table
         for row in rows:
+
+          #remove open and closing ()
           row = str(row)[1:]
           row = str(row)[:-1]
-          fields = str(row).split(",")
+
+          #if there are ' at the start and end of the row, remove them
+          #check for " just in case too
+          if str(row)[0] == "'" or str(row)[0] == "\"":
+            row = str(row)[1:]
+          if str(row)[-1] == "'" or str(row)[-1] == "\"":
+            row = str(row)[:-1]
+
+          #if a ' exists in the cell, then it will bound with "" instead of the usual
+          #this makes sure all cells are seperated by ', ' so it splits correctly
+          #this will break if ', ' is in the data!
+          row = row.replace("', \"",  "', '")
+          row = row.replace("\", '",  "', '")
+          row = row.replace("\", \"", "', '")
+
+          #if it's a single column of data, then there'll be a ', at the end of the row, so remove it
+          #just in case, check for ", as well
+          if str(row)[-2:] == "'," or str(row)[-2] == "\",":
+            row = str(row)[:-2] 
+
+          fields = str(row).split("', '")
           
           column_index = 0
 
           #for each field in a row
           for field in fields:
             field = field.strip()
-            field = str(field)[1:]
-            field = str(field)[:-1]
             
             #calculate number of spaces that need to be added to this field and add them
             number_of_spaces_needed = max_lens[column_index] - len(str(field))
@@ -191,10 +217,16 @@ for table_name in list_of_table_names:
       column_spec_file.flush()
       
       column_index = column_index + 1
+      
+    column_spec_file.close()
+    
+    print("")
 
+    i = i + 1
     tables_exported_from_sql = tables_exported_from_sql + 1
     
-column_spec_file.close()
+
+
 
 ###################################################################
 # FINAL MESSAGE
