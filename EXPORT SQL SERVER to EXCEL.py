@@ -103,7 +103,7 @@ if combine_exported_tables_into_single_workbook == False:
     
       rows = conn.execute(text("SELECT * FROM [" + str(table_name) + "]"))
       df = pd.DataFrame(list(rows))
-      df.to_excel(writer, sheet_name=table_name, index=False)
+      df.to_excel(writer, sheet_name=str(table_name)[0:30], index=False)
       writer.close()
 
       print(server + ".." + database + ".[" + table_name + "] exported as " + str(path) + "\\" + str(table_name) + "." + str(extension))
@@ -131,10 +131,10 @@ else:
     
       rows = conn.execute(text("SELECT * FROM [" + str(table_name) + "]"))
       df = pd.DataFrame(list(rows))
-      df.to_excel(writer, sheet_name=table_name, index=False)
+      df.to_excel(writer, sheet_name=str(table_name)[0:30], index=False)
       
 
-      print(server + ".." + database + ".[" + table_name + "] exported as " + str(path) + "\\" + str(combined_table_name) + "." + str(extension) + " (tab: " + str(table_name) + ")")
+      print(server + ".." + database + ".[" + table_name + "] exported as " + str(path) + "\\" + str(combined_table_name) + "." + str(extension) + " (tab: " + str(table_name)[0:30] + ")")
       print("")
 
       i = i + 1
